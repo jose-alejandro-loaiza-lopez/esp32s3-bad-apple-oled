@@ -37,6 +37,18 @@ NO_UPLOAD = '--no-upload' in sys.argv
 NO_FS = '--no-fs' in sys.argv or NO_UPLOAD
 
 
+def pio_path():
+    """Ruta del ejecutable `pio`: primero el PATH, luego ~/.platformio/penv.
+
+    Es portable: usa la carpeta del usuario actual (``expanduser('~')``) en
+    lugar de una ruta fija de una maquina concreta.
+    """
+    exe = shutil.which('pio')
+    if exe:
+        return exe
+    return os.path.join(os.path.expanduser('~'), '.platformio', 'penv', 'Scripts', 'pio.exe')
+
+
 def load_video_params():
     """Obtiene los parametros del video en (cantidad_pngs, dict).
 
@@ -185,7 +197,7 @@ def detect_port():
     Busca un puerto cuyo Hardware ID contenga 0x303A (VID de Espressif / USB
     nativo del ESP32-S3). Devuelve el nombre del puerto o None.
     """
-    pio = shutil.which('pio') or r'C:\Users\josea\.platformio\penv\Scripts\pio.exe'
+    pio = pio_path()
     try:
         out = subprocess.run([pio, 'device', 'list'], capture_output=True, text=True, timeout=30)
         lines = out.stdout.splitlines()
@@ -230,12 +242,10 @@ if port:
     os.environ['PLATFORMIO_UPLOAD_PORT'] = port
     print(f'Placa detectada en {port}\n')
 
-pio = shutil.which('pio')
-if not pio:
-    pio = r'C:\Users\josea\.platformio\penv\Scripts\pio.exe'
-    if not os.path.isfile(pio):
-        print('No encuentro pio en el PATH ni en ~/.platformio/penv/Scripts.')
-        sys.exit(1)
+pio = pio_path()
+if not os.path.isfile(pio):
+    print('No encuentro pio en el PATH ni en ~/.platformio/penv/Scripts.')
+    sys.exit(1)
 
 run = lambda *args: subprocess.run([pio, 'run', *args], check=True)
 
