@@ -139,7 +139,20 @@ Remove-Item pngs\*.png
 rm pngs/*.png
 ```
 
-### Paso 3: extrae los frames de tu video
+### Paso 3: crea la carpeta de frames y extrae el video
+
+La carpeta `pngs/` **no existe** en un clon del repo (está en `.gitignore` y no
+se sube), y `ffmpeg` **no crea carpetas por sí mismo**, así que créala primero:
+
+```bash
+# Windows (PowerShell)
+New-Item -ItemType Directory pngs
+
+# Linux/macOS
+mkdir pngs
+```
+
+Después extrae los frames de tu video:
 
 ```bash
 ffmpeg -i video.mp4 -vf "fps=30" "pngs/png (%d).png"
