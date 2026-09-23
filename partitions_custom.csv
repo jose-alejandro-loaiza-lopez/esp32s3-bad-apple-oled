@@ -1,0 +1,8 @@
+# Custom partition table for 16MB flash (ESP32-S3 R8N16)
+# Single factory app (4MB) + big data/LittleFS partition (~12.4MB).
+# Name,   Type, SubType, Offset,    Size,      Flags
+nvs,      data, nvs,     0x9000,    0x5000,
+otadata,  data, ota,     0xe000,    0x2000,
+app0,     app,  factory, 0x10000,   0x400000,
+spiffs,   data, spiffs,  0x410000,  0xBE0000,
+coredump, data, coredump,0xFF0000,  0x10000,

@@ -1,0 +1,7 @@
+.pio/
+__pycache__/
+*.pyc
+
+# Frames del video (~150 MB, excede el limite de GitHub) y binario generado.
+pngs/
+data/
