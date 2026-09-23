@@ -126,18 +126,32 @@ repo (y actualiza `data/video_meta.json`).
 
 ### Paso 1: instala ffmpeg
 
-- **Windows:** descarga un build de ffmpeg y agrega la carpeta `bin` al PATH.
-- **Linux/macOS:** `sudo apt install ffmpeg` / `brew install ffmpeg`.
+- **Windows:** se instala con `winget` (incluido en Windows 10/11):
+  ```bash
+  winget install Gyan.FFmpeg
+  ```
+  (alternativas: `choco install ffmpeg` o `scoop install ffmpeg`).
+  Al terminar, **abre una terminal nueva** para que tome el PATH.
+- **Linux:** `sudo apt install ffmpeg`.
+- **macOS:** `brew install ffmpeg`.
 
-### Paso 2: borra los frames anteriores
+Comprueba que quedó instalado: `ffmpeg -version`.
+
+### Paso 2: borra la carpeta `pngs/` anterior
+
+Si en tu copia local ya hay frames de otro video, borra la carpeta **completa**
+(no solo los archivos), porque el flujo la vuelve a crear en el Paso 3:
 
 ```bash
 # Windows (PowerShell)
-Remove-Item pngs\*.png
+Remove-Item -Recurse -Force pngs
 
 # Linux/macOS
-rm pngs/*.png
+rm -r pngs
 ```
+
+> En un clon fresco `pngs/` no existe (no se sube al repo), así que este paso
+> da error "no se encuentra" y se puede omitir sin problema.
 
 ### Paso 3: crea la carpeta de frames y extrae el video
 
