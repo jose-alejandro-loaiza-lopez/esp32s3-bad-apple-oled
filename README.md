@@ -45,14 +45,15 @@ duración completa, sin recortar frames ni comprimirlos dentro del firmware.
 
 ### Software
 
-- **Python 3.8+** con el paquete **`pygame`**.
+- **PlatformIO** (CLI `pio` o la extensión para VS Code): único requisito
+  obligatorio.
+- **Python 3.8+**: lo usa el script `main.py`. Solo hará falta **`pygame`** si
+  quieres convertir tus propios frames (el binario incluido no lo necesita):
   ```bash
   pip install pygame
   ```
-- **[PlatformIO](https://platformio.org/)** (CLI `pio` o la extensión para VS Code).
-- **ffmpeg**: necesario para extraer los frames del video en `pngs/` (el repo no
-  los incluye, ver [Puesta en marcha](#puesta-en-marcha-rápida)). También sirve
-  para importar tus propios videos.
+- **ffmpeg**: opcional, solo para importar otro video (ver
+  [Importar otro video](#importar-otro-video-tutorial-completo)).
 - [Opcional] Git, para clonar/push del repositorio.
 
 > El script `main.py` utiliza el `esptool` que viene incluido dentro de la
@@ -79,16 +80,15 @@ Dirección I2C: **0x3C** (la más habitual en los módulos SSD1306).
 
 ## Puesta en marcha rápida
 
-### 1. Obtén los frames del video en `pngs/`
+### 1. Clona el repositorio (ya lista para reproducir)
 
-La carpeta `pngs/` **no se sube a GitHub** (pesa ~150 MB y excede el límite de
-100 MB de GitHub). Tienes dos opciones:
+El repo incluye el video ya procesado: `data/badapple.bin` (4.4 MB, 6572
+frames) junto con su metadato `data/video_meta.json`. **No necesitas ffmpeg ni
+pygame** para reproducir Bad Apple: solo conectar la placa y ejecutar `main.py`.
 
-- **Opción A (recomendada): extrae los frames tú mismo** con ffmpeg. Sigue la
-  sección [Importar otro video](#importar-otro-video-tutorial-completo).
-- **Opción B:** descarga los frames de Bad Apple desde cualquier fuente y
-  colócalos en `pngs/` nombrados `png (1).png`, `png (2).png`, ... (se ordenan
-  numéricamente).
+> Para reproducir TU propio video, reemplaza ese binario siguiendo la sección
+> [Importar otro video](#importar-otro-video-tutorial-completo) (ahí sí usarás
+> `pngs/` y pygame).
 
 ### 2. Conecta la placa y ejecuta
 
@@ -100,7 +100,8 @@ python main.py
 
 Eso hace todo el trabajo en orden:
 
-1. Convierte `pngs/` → `data/badapple.bin` (binario 1 bit por pixel).
+1. Convierte `pngs/` → `data/badapple.bin`, **o** si no hay `pngs/`, usa el
+   binario que ya viene incluido en `data/` (sin pygame ni ffmpeg).
 2. Genera `src/main.cpp` con los parámetros reales del video.
 3. Compila y sube la partición **LittleFS** (el archivo del video).
 4. Compila y sube la **app**.
@@ -110,8 +111,8 @@ Eso hace todo el trabajo en orden:
 
 | Comando | Qué hace |
 |---|---|
-| `python main.py` | Convertir + subir filesystem + subir app |
-| `python main.py --no-fs` | Convertir + compilar + subir **solo la app** (el FS ya está en la placa) |
+| `python main.py` | Convertir (si hay `pngs/`) o usar el binario incluido + subir filesystem + subir app |
+| `python main.py --no-fs` | Convertir/usar binario + compilar + subir **solo la app** (el FS ya está en la placa) |
 | `python main.py --no-upload` | Convertir + compilar, sin subir nada |
 | `pio device monitor -b 115200` | Ver el log de arranque (debe decir `LittleFS OK ...`) |
 
@@ -119,7 +120,9 @@ Eso hace todo el trabajo en orden:
 
 ## Importar otro video (tutorial completo)
 
-El proyecto sirve para reproducir **cualquier video**, no solo Bad Apple.
+El proyecto sirve para reproducir **cualquier video**, no solo Bad Apple. Al
+hacerlo generas un `data/badapple.bin` nuevo que **reemplaza** al incluido en el
+repo (y actualiza `data/video_meta.json`).
 
 ### Paso 1: instala ffmpeg
 
@@ -241,7 +244,8 @@ Después de cambiar el valor, vuelve a ejecutar `python main.py`.
 ├── partitions_custom.csv    # tabla de particiones (app 4 MB + datos ~12.4 MB)
 ├── pngs/                    # frames del video (NO subidos a GitHub, ~150 MB)
 └── data/
-    └── badapple.bin         # generado por convert_oled.py (ignorado por git)
+    ├── badapple.bin         # video procesado - VA INCLUIDO en el repo (4.4 MB)
+    └── video_meta.json      # parametros (NF, FPS, VW, ...) - incluido
 ```
 
 ---
@@ -291,9 +295,10 @@ Después de cambiar el valor, vuelve a ejecutar `python main.py`.
 ## Notas para GitHub
 
 - `pngs/` pesa ~150 MB y **excede el límite de 100 MB de GitHub**, por eso está
-  en `.gitignore` y no se sube. Cualquiera que clone el repo debe obtener los
-  frames con ffmpeg siguiendo el tutorial de arriba.
-- `data/` también se ignora: `badapple.bin` se genera en cada ejecución.
+  en `.gitignore` y no se sube.
+- `data/` **sí se versiona** (~4.4 MB): incluye `badapple.bin` +
+  `video_meta.json` para que el quick start funcione sin ffmpeg ni pygame. Se
+  regenera con `python main.py` cuando hay frames en `pngs/`.
 
 ---
 

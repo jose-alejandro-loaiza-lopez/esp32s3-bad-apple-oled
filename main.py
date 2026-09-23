@@ -5,24 +5,30 @@ main.py
 
 Script de un solo paso para el proyecto "Bad Apple en OLED ESP32-S3".
 
-1. Convierte los frames de ``pngs/`` a ``data/badapple.bin`` (llama a
-   ``convert_oled.py``). Alli se configuran FPS, umbral blanco/negro, etc.
-2. Genera ``src/main.cpp``: el firmware que reproduce el video leyendo el
-   binario desde la particion LittleFS.
-3. Compila y sube con PlatformIO (``pio``): primero el filesystem (LittleFS)
-   y luego la app, con un UNICO reset de la placa al final.
+Modo 1 (frames propios): convierte los frames de ``pngs/`` a
+``data/badapple.bin`` llamando a ``convert_oled.py`` (allí se configuran
+FPS, umbral blanco/negro, etc.) y regenera ``data/video_meta.json``.
+
+Modo 2 (sin pngs): si no hay ``pngs/`` usa el binario y el metadato que ya
+vienen incluidos en el repositorio (``data/badapple.bin`` +
+``data/video_meta.json``). Así cualquiera puede reproducir sin instalar
+pygame ni extraer frames con ffmpeg.
+
+En ambos casos genera ``src/main.cpp``, compila y sube con PlatformIO
+(``pio``): primero el filesystem (LittleFS) y luego la app, con un UNICO
+reset de la placa al final.
 
 Uso::
 
-    python main.py               convertir + subir filesystem + subir app
-    python main.py --no-fs       convertir + compilar + subir solo la app
-    python main.py --no-upload   convertir + compilar, sin subir nada
+    python main.py               convertir/usar binario + subir FS + subir app
+    python main.py --no-fs       convertir/usar binario + compilar, subir solo la app
+    python main.py --no-upload   compilar sin subir nada
 
 El binario del video NO se compila dentro del firmware: se guarda en la
 particion de datos, por eso caben todos los frames a resolucion completa.
 """
 
-import subprocess, sys, os, glob, shutil
+import subprocess, sys, os, glob, shutil, json
 
 # ---------------------------------------------------------------------------
 # Opciones de linea de comandos
@@ -30,12 +36,43 @@ import subprocess, sys, os, glob, shutil
 NO_UPLOAD = '--no-upload' in sys.argv
 NO_FS = '--no-fs' in sys.argv or NO_UPLOAD
 
-print(f"Loaded {len(glob.glob('pngs/*.png'))} images\n")
 
-# Parametros calculados por convert_oled.py al convertir los frames:
-# NF, FPS, VW, VH, BK (tamano de bloque), OX/OY (offset centrado),
-# FB (bytes por frame) y SCR_W/SCR_H (tamano del panel).
-from convert_oled import NF, FPS, VW, VH, BK, OX, OY, FB, SCR_W, SCR_H
+def load_video_params():
+    """Obtiene los parametros del video en (cantidad_pngs, dict).
+
+    - Si hay frames en ``pngs/`` los convierte a ``data/badapple.bin`` y
+      refresca ``data/video_meta.json`` (require pygame).
+    - Si NO hay frames pero existen ``data/badapple.bin`` + ``data/video_meta.json``
+      (ambos versionados en el repo), los usa tal cual: permite reproducir SIN
+      instalar pygame ni generar frames con ffmpeg.
+    """
+    n = len(glob.glob('pngs/*.png'))
+    if n:
+        from convert_oled import NF, FPS, VW, VH, BK, OX, OY, FB, SCR_W, SCR_H
+        return n, dict(NF=NF, FPS=FPS, VW=VW, VH=VH, BK=BK, OX=OX, OY=OY,
+                       FB=FB, SCR_W=SCR_W, SCR_H=SCR_H)
+    if os.path.isfile('data/badapple.bin') and os.path.isfile('data/video_meta.json'):
+        with open('data/video_meta.json') as f:
+            return 0, json.load(f)
+    print('ERROR: no hay pngs/ para convertir, y tampoco data/badapple.bin'
+          ' + data/video_meta.json.\nExtrae los frames con ffmpeg (ver README)'
+          ' o restaura el binario desde el repositorio.')
+    sys.exit(1)
+
+
+n_pngs, meta = load_video_params()
+if n_pngs:
+    print(f'Loaded {n_pngs} images (convirtiendo a data/badapple.bin)\n')
+else:
+    print('Sin pngs/: usando data/badapple.bin existente (video_meta.json)\n')
+
+# Parametros del video: NF, FPS, VW, VH, BK (tamano de bloque), OX/OY (offset
+# centrado), FB (bytes por frame) y SCR_W/SCR_H (tamano del panel). Vienen de
+# la conversion recien hecha o de data/video_meta.json cuando no hay pngs/.
+NF = int(meta['NF']); FPS = int(meta['FPS'])
+VW = int(meta['VW']); VH = int(meta['VH']); BK = int(meta['BK'])
+OX = int(meta['OX']); OY = int(meta['OY']); FB = int(meta['FB'])
+SCR_W = int(meta['SCR_W']); SCR_H = int(meta['SCR_H'])
 
 print('Creating src/main.cpp...\n')
 

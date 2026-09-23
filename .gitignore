@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 
-# Frames del video (~150 MB, excede el limite de GitHub) y binario generado.
+# Frames del video (~150 MB, exceden el limite de GitHub). El binario y su
+# metadato SI se versionan: data/badapple.bin + data/video_meta.json (4.4 MB),
+# para que el quick start funcione sin ffmpeg ni pygame.
 pngs/
-data/

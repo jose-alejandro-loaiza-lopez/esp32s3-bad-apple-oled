@@ -40,7 +40,7 @@ Ajustes tipicos (editar aqui):
     ``SCR_W/SCR_H``  -> resolucion del panel OLED.
 """
 
-import pygame, glob, os, re
+import pygame, glob, os, re, json
 
 pygame.init()
 pygame.display.set_mode((1, 1))
@@ -145,6 +145,12 @@ total_bytes = NF * FB
 if NF < len(paths):
     print(f'AVISO: {len(paths)} frames no caben en la particion'
           f' ({total_bytes} > {FS_CAP} bytes); se usan los primeros {NF}.')
+
+# Guarda los parametros del video para que main.py pueda funcionar SIN pngs/:
+# lee data/video_meta.json y usa data/badapple.bin tal cual (modo "sin pngs").
+with open(os.path.join('data', 'video_meta.json'), 'w') as mf:
+    json.dump(dict(NF=NF, FPS=FPS, VW=VW, VH=VH, BK=BK, OX=OX, OY=OY,
+                   FB=FB, SCR_W=SCR_W, SCR_H=SCR_H), mf)
 
 print(f'Fuente {src_w}x{src_h} -> contenido {tw}x{th} -> rejilla {VW}x{VH} '
       f'(bloque {BK}x{BK}, offset {OX},{OY}, {FB} bytes/frame)')
