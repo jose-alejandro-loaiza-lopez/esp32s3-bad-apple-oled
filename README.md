@@ -11,12 +11,7 @@ duración completa, sin recortar frames ni comprimirlos dentro del firmware.
 
 ## Vista del montaje (IRL)
 
-Pon aquí una foto real del proyecto (ESP32-S3 + OLED reproduciendo):
-
 ![Montaje real del proyecto (ESP32-S3 + OLED SSD1306)](galeria/image.png)
-
-> Puedes reemplazar `galeria/image.png` con tus propias fotos o agregar más
-> imágenes en esa carpeta y actualizar la ruta.
 
 ---
 
